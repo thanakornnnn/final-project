@@ -2,15 +2,28 @@
 
 import csv, os
 
-__location__ = os.path.realpath(
-    os.path.join(os.getcwd(), os.path.dirname(__file__)))
+# __location__ = os.path.realpath(
+#     os.path.join(os.getcwd(), os.path.dirname(__file__)))
+#
+# persons = []
+# with open(os.path.join(__location__, 'persons.csv')) as f:
+#     rows = csv.DictReader(f)
+#     for r in rows:
+#         persons.append(dict(r))
+# print(persons)
 
-persons = []
-with open(os.path.join(__location__, 'persons.csv')) as f:
-    rows = csv.DictReader(f)
-    for r in rows:
-        persons.append(dict(r))
-print(persons)
+class Readcsv:
+    def __init__(self, filename):
+        self.data = []
+        self.filename = filename
+        self.__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
+    def read_csv(self):
+        # data = []
+        with open(self.filename) as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                self.data.append(dict(row))
 
 # add in code for a Database class
 
