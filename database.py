@@ -61,23 +61,48 @@ class Table:
             if i[user_id_key] == user_id:
                 i[key] = value
 
-        def join(self, other_table, common_key):
-            joined_table = Table(
-                self.table_name + '_joins_' + other_table.table_name, [])
-            for item1 in self.table:
-                for item2 in other_table.table:
-                    if item1[common_key] == item2[common_key]:
-                        dict1 = copy.deepcopy(item1)
-                        dict2 = copy.deepcopy(item2)
-                        dict1.update(dict2)
-                        joined_table.data.append(dict1)
-            return joined_table
+    def join(self, other_table, common_key):
+        joined_table = Table(
+            self.table_name + '_joins_' + other_table.table_name, [])
+        for item1 in self.data:
+            for item2 in other_table.table:
+                if item1[common_key] == item2[common_key]:
+                    dict1 = copy.deepcopy(item1)
+                    dict2 = copy.deepcopy(item2)
+                    dict1.update(dict2)
+                    joined_table.data.append(dict1)
+        return joined_table
 
-        def insert_entry(self, new_entry):
-            if isinstance(new_entry, dict):
-                self.data.append(new_entry)
+    def insert_entry(self, new_entry):
+        if isinstance(new_entry, dict):
+            self.data.append(new_entry)
 
+    def filter(self, condition):
+        filtered_table = Table(f'{self.table_name}_filtered', [])
+        for i in self.data:
+            if condition(i):
+                filtered_table.data.append(i)
+        return filtered_table
 
+    def aggregate(self, aggregation_function, aggregation_key):
+        values = []
+        for i in self.data:
+            values.append(float(i[aggregation_key]))
+        return aggregation_function(values)
+
+    def select_attributes(self, selected_attributes):
+        # เลือกเฉพาะ attributes ที่กำหนดจากตาราง
+        value = []
+        for i in self.data:
+            dct_value = {}
+            for key in i:
+                if key in selected_attributes:
+                    dct_value[key] = i[key]
+            value.append(dct_value)
+        return value
+
+    def __str__(self):
+        return self.table_name + ':' + str(self.data)
 
 # modify the code in the Table class so that it supports the insert operation where an entry can be added to a list of dictionary
 
