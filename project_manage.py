@@ -1,4 +1,3 @@
-import csv
 from database import *
 
 
@@ -12,17 +11,17 @@ from database import *
     # see the guide how many tables are needed
 
     # add all these tables to the database
-database = DB()
+database_n = DB()
 def initializing():
     read_person = Readcsv('persons.csv')
     read_person.read_csv()
     persons_table = Table('persons', read_person.data)
-    database.insert(persons_table)
+    database_n.insert(persons_table)
 
     read_login = Readcsv('login.csv')
     read_login.read_csv()
     user_table = Table('login', read_login.data)
-    database.insert(user_table)
+    database_n.insert(user_table)
 
 # define a funcion called login
 # here are things to do in this function:
@@ -30,16 +29,24 @@ def initializing():
         # ask a user for a username and password
         # returns [ID, role] if valid, otherwise returning None
 def login():
+
     ask_username = input('Enter username: ')
     ask_password = input('Enter password: ')
-    search_login = database.search('login')
+    search_login = database_n.search('login')
     for i in search_login.data:
         if ask_username == i['username'] and ask_password == i['password']:
             return [i['ID'], i['role']]
     return None
+
 # define a function called exit
 def exit():
-    pass
+    for table in database_n.database:
+        table_name = table.table_name
+        file_path = os.path.join(table.__location__, f'{table_name}.csv')
+        with open(file_path, 'w', newline='') as file:
+            writer = csv.DictWriter(file, fieldnames=table.data[0].keys())
+            writer.writeheader()
+            writer.writerows(table.data)
 
 # here are things to do in this function:
    # write out all the tables that have been modified to the corresponding csv files
@@ -52,6 +59,7 @@ def exit():
 
 initializing()
 val = login()
+print(val)
 
 # based on the return value for login, activate the code that performs activities according to the role defined for that person_id
 
