@@ -91,7 +91,6 @@ class Table:
         return aggregation_function(values)
 
     def select_attributes(self, selected_attributes):
-        # เลือกเฉพาะ attributes ที่กำหนดจากตาราง
         value = []
         for i in self.data:
             dct_value = {}
