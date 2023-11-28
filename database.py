@@ -16,7 +16,7 @@ class Readcsv:
     def __init__(self, filename):
         self.data = []
         self.filename = filename
-        self.__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+        # self.__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
     def read_csv(self):
         with open(self.filename) as file:
