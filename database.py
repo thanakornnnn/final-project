@@ -1,30 +1,19 @@
-# try wrapping the code below that reads a persons.csv file in a class and make it more general such that it can read in any csv file
 import csv
 import os
+import copy
 
-# __location__ = os.path.realpath(
-#     os.path.join(os.getcwd(), os.path.dirname(__file__)))
-#
-# persons = []
-# with open(os.path.join(__location__, 'persons.csv')) as f:
-#     rows = csv.DictReader(f)
-#     for r in rows:
-#         persons.append(dict(r))
-# print(persons)
-
-class Readcsv:
+class ReadCSV:
     def __init__(self, filename):
-        self.data = []
         self.filename = filename
-        # self.__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+        self.data = self.read_csv()
 
     def read_csv(self):
-        with open(self.filename) as file:
-            csv_reader = csv.DictReader(file)
-            for row in csv_reader:
-                self.data.append(dict(row))
-
-# add in code for a Database class
+        __location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+        data = []
+        with open(os.path.join(__location__, self.filename)) as f:
+            rows = csv.DictReader(f)
+            data = [dict(row) for row in rows]
+        return data
 
 class DB:
     def __init__(self):
@@ -37,17 +26,14 @@ class DB:
         self.database.append(table)
 
     def search(self, table_name):
-        for i in self.database:
-            if i.table_name == table_name:
-                return i
-        return None
+        return next((table for table in self.database if table.table_name == table_name), None)
+
+    def project_id_exists(self, project_id):
+        project_table = self.search('Project Table')
+        return project_table and any(row.get('ProjectID') == project_id for row in project_table.data)
 
     def __str__(self):
         return '\n'.join(map(str, self.database))
-
-# add in code for a Table class
-
-import copy
 
 class Table:
     def __init__(self, table_name: str, data: list or dict):
@@ -56,16 +42,16 @@ class Table:
         self.__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
 
     def update_entry(self, user_id, key, value):
-        for i in self.data:
-            user_id_key = list(i.keys())[0]
-            if i[user_id_key] == user_id:
-                i[key] = value
+        for entry in self.data:
+            user_id_key = list(entry.keys())[0]
+            if entry[user_id_key] == user_id:
+                entry[key] = value
 
     def join(self, other_table, common_key):
         joined_table = Table(
-            self.table_name + '_joins_' + other_table.table_name, [])
+            f'{self.table_name}_joins_{other_table.table_name}', [])
         for item1 in self.data:
-            for item2 in other_table.table:
+            for item2 in other_table.data:
                 if item1[common_key] == item2[common_key]:
                     dict1 = copy.deepcopy(item1)
                     dict2 = copy.deepcopy(item2)
@@ -73,36 +59,32 @@ class Table:
                     joined_table.data.append(dict1)
         return joined_table
 
-    def insert_entry(self, new_entry):
-        if isinstance(new_entry, dict):
-            self.data.append(new_entry)
+    def insert(self, entry, db_instance=None):
+        if self.table_name in ['Advisor_pending_request Table', 'Member_pending_request table']:
+            project_id = entry.get('ProjectID')
+            if project_id and db_instance and not db_instance.project_id_exists(project_id):
+                raise ValueError(f"ProjectID {project_id} does not exist in Project Table.")
+        elif isinstance(entry, dict):
+            self.data.append(entry)
+
+    def add_field_to_dicts(self, dicts_list, field_name, field_value):
+        for dict_item in dicts_list:
+            dict_item[field_name] = field_value
 
     def filter(self, condition):
         filtered_table = Table(f'{self.table_name}_filtered', [])
-        for i in self.data:
-            if condition(i):
-                filtered_table.data.append(i)
+        filtered_table.data = [entry for entry in self.data if condition(entry)]
         return filtered_table
 
     def aggregate(self, aggregation_function, aggregation_key):
-        values = []
-        for i in self.data:
-            values.append(float(i[aggregation_key]))
+        values = [float(entry[aggregation_key]) for entry in self.data]
         return aggregation_function(values)
 
     def select_attributes(self, selected_attributes):
-        value = []
-        for i in self.data:
-            dct_value = {}
-            for key in i:
-                if key in selected_attributes:
-                    dct_value[key] = i[key]
-            value.append(dct_value)
-        return value
+        selected_data = []
+        for entry in self.data:
+            selected_data.append({key: entry[key] for key in selected_attributes if key in entry})
+        return selected_data
 
     def __str__(self):
-        return self.table_name + ':' + str(self.data)
-
-# modify the code in the Table class so that it supports the insert operation where an entry can be added to a list of dictionary
-
-# modify the code in the Table class so that it supports the update operation where an entry's value associated with a key can be updated
+        return f'{self.table_name}: {str(self.data)}'
