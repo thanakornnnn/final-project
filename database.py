@@ -32,6 +32,23 @@ class DB:
         project_table = self.search('Project Table')
         return project_table and any(row.get('ProjectID') == project_id for row in project_table.data)
 
+    def add_table(self, table):
+        if table.table_name not in self.database:
+            self.database.append(table)
+
+    def get_table(self, table_name):
+        for table in self.database:
+            if table.table_name == table_name:
+                return table
+        return None
+
+    def create_table(self, table_name, initial_data=None):
+        if initial_data is None:
+            initial_data = None
+        new_table = Table(table_name, initial_data)
+        self.add_table(new_table)
+        return new_table
+
     def __str__(self):
         return '\n'.join(map(str, self.database))
 
@@ -40,6 +57,18 @@ class Table:
         self.table_name = table_name
         self.data = data
         self.__location__ = os.path.realpath(os.path.join(os.getcwd(), os.path.dirname(__file__)))
+
+    def insert_data(self, new_data: dict):
+        if not self.data:
+            self.data.append(new_data)
+        else:
+            # Check if the keys in new_data match the keys in the existing table
+            existing_keys = set(self.data[0].keys())
+            new_data_keys = set(new_data.keys())
+            if existing_keys == new_data_keys:
+                self.data.append(new_data)
+            else:
+                raise KeyError("Keys in new data do not match keys in the table")
 
     def update_entry(self, user_id, key, value):
         for entry in self.data:
@@ -58,18 +87,6 @@ class Table:
                     dict1.update(dict2)
                     joined_table.data.append(dict1)
         return joined_table
-
-    def insert(self, entry, db_instance=None):
-        if self.table_name in ['Advisor_pending_request Table', 'Member_pending_request table']:
-            project_id = entry.get('ProjectID')
-            if project_id and db_instance and not db_instance.project_id_exists(project_id):
-                raise ValueError(f"ProjectID {project_id} does not exist in Project Table.")
-        elif isinstance(entry, dict):
-            self.data.append(entry)
-
-    def add_field_to_dicts(self, dicts_list, field_name, field_value):
-        for dict_item in dicts_list:
-            dict_item[field_name] = field_value
 
     def filter(self, condition):
         filtered_table = Table(f'{self.table_name}_filtered', [])
