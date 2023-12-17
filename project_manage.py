@@ -2,8 +2,6 @@ from database import *
 import random
 
 database_n = DB()
-
-
 def initializing():
     read_person = ReadCSV('persons.csv')
     person_table = Table('Person table', read_person.data)
@@ -27,6 +25,7 @@ def initializing():
     memPendReq_data = [{'ProjectID': None, 'to_be_member': None, 'Response': None, 'Response_date': None}]
     memPendReq_table = Table('Member_pending_request table', memPendReq_data)
     database_n.insert(memPendReq_table)
+    return database_n
 
 def login():
     while True:
@@ -44,18 +43,62 @@ def login():
         return None
 
 
-def exit():
-    for table in database_n.database:
-        filename = f"{table.table_name}.csv"
-        with open(filename, mode='w', newline='', encoding='utf-8') as file:
-            if table.data:
-                headers = table.data[0].keys()
-                writer = csv.DictWriter(file, fieldnames=headers)
-                writer.writeheader()
-                writer.writerows(table.data)
-            else:
-                print(f"Table '{table.table_name}' is empty. No CSV file created.")
-    print("All tables have been written out to CSV files.")
+def exit(dct):
+    myFile_project = open('Project table.csv')
+    myFile_advisor_pending = open('Advisor_pending_request.csv')
+    myFile_login = open('login.csv')
+    myFile_person = open('persons.csv')
+    myFile_member_pending = open('Member_pending_request table.csv')
+
+    writer_project = csv.writer(myFile_login)
+    writer_advisor = csv.writer(myFile_person)
+    writer_login = csv.writer(myFile_advisor_pending)
+    writer_person = csv.writer(myFile_member_pending)
+    writer_member = csv.writer(myFile_project)
+
+    writer_project.writerow(['ProjectID','Title','Lead','Member1','Member2','Advisor','Status'])
+    writer_advisor.writerow(['ProjectID','to_be_advisor','Response','Response_date'])
+    writer_person.writerow(['ID','fist','last','type'])
+    writer_login.writerow(['ID','username','password','role'])
+    writer_member.writerow(['ProjectID','to_be_member','Response','Response_date'])
+
+
+    for dictionary in dct:
+        writer_project.writerow(dictionary.values())
+    myFile_project.close()
+    for dictionary in dct:
+        writer_person.writerow(dictionary.values())
+    myFile_person.close()
+    for dictionary in dct:
+        writer_login.writerow(dictionary.values())
+    myFile_login.close()
+    for dictionary in dct:
+        writer_advisor.writerow(dictionary.values())
+    myFile_advisor_pending.close()
+    for dictionary in dct:
+        writer_member.writerow(dictionary.values())
+    myFile_member_pending.close()
+
+    myFile_project = open('Project table.csv','r')
+    print(myFile_project.read())
+    myFile_project.close()
+
+    myFile_advisor_pending = open('Advisor_pending_request.csv')
+    print(myFile_advisor_pending.read())
+    myFile_advisor_pending.close()
+
+    myFile_login = open('login.csv','r')
+    print(myFile_login.read())
+    myFile_login.close()
+
+    myFile_person = open('persons.csv','r')
+    print(myFile_person.read())
+    myFile_person.close()
+
+    myFile_member_pending = open('Member_pending_request table.csv', 'r')
+    print(myFile_member_pending.read())
+    myFile_member_pending.close()
+
 
 def generate_random_project_id():
     """
@@ -141,6 +184,7 @@ class Lead:
         self.person_first = first
         self.person_last = last
         self.person_type = "Lead"
+        self.database = DB()
 
     def project_status(self, project_id, project_table):
         project = next((p for p in project_table.table if p['ProjectID'] == project_id), None)
@@ -163,30 +207,48 @@ class Lead:
         else:
             print(f"No project found with ProjectID {project_id}.")
 
-    def create_project(self, project_table, member_table):
+    def create_project(self):
+        id = random_id
         project_title = input("Enter the title of the project: ")
-        existing_project = next((project for project in project_table.table if project['Lead'] == self.person_id), None)
-        if existing_project:
-            print(f"You are already leading a project with ProjectID {existing_project['ProjectID']}.")
-        else:
-            new_project = {
-                'ProjectID': generate_random_project_id(),
-                'Title': project_title,
-                'Lead': self.person_id,
-                'Member1': None,
-                'Member2': None,
-                'Advisor': None,
-                'Status': 'Open'
-            }
-            project_table.insert_data(new_project)
-            print(f"Project '{project_title}' created with ProjectID {new_project['ProjectID']}.")
-            project_csv_filename = 'Project_table.csv'
-            with open(project_csv_filename, mode='w', newline='', encoding='utf-8') as file:
-                headers = project_table.data[0].keys()
-                writer = csv.DictWriter(file, fieldnames=headers)
-                writer.writeheader()
-                writer.writerows(project_table.data)
-            print(f"'Project table' saved to {project_csv_filename}.")
+        dct = {'ProjectID':id,'Title':project_title,'Lead':val[0],'Member1':None,'Member2':None,'Advisor':None,'Status':None}
+        database_n.database.append(dct)
+        exit('Project table.csv',dct)
+
+
+
+
+
+
+
+
+
+
+
+
+        pass
+        # project_title = input("Enter the title of the project: ")
+        # existing_project = next((project for project in project_table.table if project['Lead'] == self.person_id), None)
+        # if existing_project:
+        #     print(f"You are already leading a project with ProjectID {existing_project['ProjectID']}.")
+        # else:
+        #     new_project = {
+        #         'ProjectID': generate_random_project_id(),
+        #         'Title': project_title,
+        #         'Lead': self.person_id,
+        #         'Member1': None,
+        #         'Member2': None,
+        #         'Advisor': None,
+        #         'Status': 'Open'
+        #     }
+        #     project_table.insert_data(new_project)
+        #     print(f"Project '{project_title}' created with ProjectID {new_project['ProjectID']}.")
+        #     project_csv_filename = 'Project_table.csv'
+        #     with open(project_csv_filename, mode='w', newline='', encoding='utf-8') as file:
+        #         headers = project_table.data[0].keys()
+        #         writer = csv.DictWriter(file, fieldnames=headers)
+        #         writer.writeheader()
+        #         writer.writerows(project_table.data)
+        #     print(f"'Project table' saved to {project_csv_filename}.")
 
 
 class Member:
@@ -400,7 +462,7 @@ elif val[1] == 'lead':
             changes = input("Enter modifications: ")
             lead_instance.modify_project(project_table)
         elif choice == '6':
-            lead_instance.create_project(project_table, member_table)
+            lead_instance.create_project()
         elif choice == '7':
             break
         else:
