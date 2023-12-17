@@ -1,60 +1,63 @@
 from database import *
 import random
 
-database_n = DB()
+
 def initializing():
+    database_n = DB()
+
     read_person = ReadCSV('persons.csv')
-    person_table = Table('Person table', read_person.data)
+    person = read_person.open_csv()
+    person_table = Table('person', person)
     database_n.insert(person_table)
 
     read_login = ReadCSV('login.csv')
-    login_table = Table('Login table', read_login.data)
+    login = read_login.open_csv()
+    login_table = Table('login', login)
     database_n.insert(login_table)
 
-    project_data = [
-        {'ProjectID': None, 'Title': None, 'Lead': None, 'Member1': None,
-         'Member2': None, 'Advisor': None, 'Status': None}]
-    project_table = Table('Project table', project_data)
+    read_project = ReadCSV('project.csv')
+    project = read_project.open_csv()
+    project_table = Table('project',project)
     database_n.insert(project_table)
 
-    adPendReq_data = [
-        {'ProjectID': None, 'to_be_advisor': None, 'Response': None, 'Response_date': None}]
-    adPendReq_table = Table('Advisor_pending_request table', adPendReq_data)
-    database_n.insert(adPendReq_table)
+    read_member = ReadCSV('Member_pending_request.csv')
+    member = read_member.open_csv()
+    member_table = Table('Member_pending',member)
+    database_n.insert(member_table)
 
-    memPendReq_data = [{'ProjectID': None, 'to_be_member': None, 'Response': None, 'Response_date': None}]
-    memPendReq_table = Table('Member_pending_request table', memPendReq_data)
-    database_n.insert(memPendReq_table)
+    read_advisor = ReadCSV('Advisor_pending_request.csv')
+    advisor = read_advisor.open_csv()
+    advisor_table = Table('Advisor_pending',advisor)
+    database_n.insert(advisor_table)
+
     return database_n
 
+
 def login():
-    while True:
-        username = input("Enter username: ")
-        login_table = database_n.search('Login table')
-        user_found = next((user for user in login_table.data if user['username'] == username), None)
-        if user_found:
-            break
-        else:
-            print("Username not found. Please try again.")
-    password = input("Enter password: ")
-    if user_found['password'] == password:
-        return [user_found['ID'], user_found['role']]
-    else:
-        return None
+    data = initializing()
+    list = data.search('login')
+    username = input('Enter username: ')
+    password = input('Enter password: ')
+    id_role = []
+    for user_info in list.data:
+        if username == user_info['username'] and password == user_info['password']:
+            id_role.extend([user_info['ID'], user_info['role']])
+            return id_role
+    return None
 
 
-def exit(dct):
-    myFile_project = open('Project table.csv')
-    myFile_advisor_pending = open('Advisor_pending_request.csv')
-    myFile_login = open('login.csv')
-    myFile_person = open('persons.csv')
-    myFile_member_pending = open('Member_pending_request table.csv')
+def exit():
+    myFile_project = open('project.csv', 'w')
+    myFile_advisor_pending = open('Advisor_pending_request.csv', 'w')
+    myFile_login = open('login.csv', 'w')
+    myFile_person = open('persons.csv', 'w')
+    myFile_member_pending = open('Member_pending_request.csv', 'w')
 
-    writer_project = csv.writer(myFile_login)
-    writer_advisor = csv.writer(myFile_person)
-    writer_login = csv.writer(myFile_advisor_pending)
-    writer_person = csv.writer(myFile_member_pending)
-    writer_member = csv.writer(myFile_project)
+    writer_project = csv.writer(myFile_project)
+    writer_advisor = csv.writer(myFile_advisor_pending)
+    writer_login = csv.writer(myFile_login)
+    writer_person = csv.writer(myFile_person)
+    writer_member = csv.writer(myFile_member_pending)
 
     writer_project.writerow(['ProjectID','Title','Lead','Member1','Member2','Advisor','Status'])
     writer_advisor.writerow(['ProjectID','to_be_advisor','Response','Response_date'])
@@ -62,442 +65,321 @@ def exit(dct):
     writer_login.writerow(['ID','username','password','role'])
     writer_member.writerow(['ProjectID','to_be_member','Response','Response_date'])
 
-
-    for dictionary in dct:
+    for dictionary in newdata.search('project').data:
         writer_project.writerow(dictionary.values())
     myFile_project.close()
-    for dictionary in dct:
+
+    for dictionary in newdata.search('persons').data:
         writer_person.writerow(dictionary.values())
     myFile_person.close()
-    for dictionary in dct:
+
+    for dictionary in newdata.search('login').data:
         writer_login.writerow(dictionary.values())
     myFile_login.close()
-    for dictionary in dct:
+
+    for dictionary in newdata.search('Advisor_pending').data:
         writer_advisor.writerow(dictionary.values())
     myFile_advisor_pending.close()
-    for dictionary in dct:
+
+    for dictionary in newdata.search('Member_pending').data:
         writer_member.writerow(dictionary.values())
-    myFile_member_pending.close()
-
-    myFile_project = open('Project table.csv','r')
-    print(myFile_project.read())
-    myFile_project.close()
-
-    myFile_advisor_pending = open('Advisor_pending_request.csv')
-    print(myFile_advisor_pending.read())
-    myFile_advisor_pending.close()
-
-    myFile_login = open('login.csv','r')
-    print(myFile_login.read())
-    myFile_login.close()
-
-    myFile_person = open('persons.csv','r')
-    print(myFile_person.read())
-    myFile_person.close()
-
-    myFile_member_pending = open('Member_pending_request table.csv', 'r')
-    print(myFile_member_pending.read())
     myFile_member_pending.close()
 
 
 def generate_random_project_id():
-    """
-    Generates a random 4-digit ID for a project.
-    Returns a string of 4 digits.
-    """
-    __random_id = f"{random.randint(0, 9999):04d}"
-    return __random_id
-
-random_id = generate_random_project_id()
+    random_id = f"{random.randint(0, 99999):06d}"
+    return random_id
 
 
 class Student:
-    def __init__(self, ID, status, projectID):
-        self.ID = ID
-        self.status = status
-        self.projectID = projectID
+    def __init__(self):
+        for i in newdata.search('Member_pending').data:
+            self.ID = i['projectID']
 
-    def view_requests(self, memberstatus):
-        pending_requests = [request for request in
-                            memberstatus.table if
-                            request['to_be_member'] == self.ID]
-        for request in pending_requests:
-            print(f"ProjectID: {request['ProjectID']}, Response: {request['Response']}, Date: {request.get('Response_date', 'N/A')}")
-        return pending_requests
-
-    def accept_deny_request(self, request_id, accept, memberstatus, project_table):
-        for request in memberstatus.table:
-            if request['ProjectID'] == request_id:
-                if accept:
-                    request['Response'] = 'Accepted'
-                    for project in project_table.table:
-                        if project['ProjectID'] == request_id:
-                            if self.ID != project['Member1'] and self.ID != \
-                                    project['Member2']:
-                                if project['Member1'] is None:
-                                    project['Member1'] = self.ID
-                                elif project['Member2'] is None:
-                                    project['Member2'] = self.ID
-                                else:
-                                    print(
-                                        "Project already has maximum members.")
-                                break
-                else:
-                    request['Response'] = 'Denied'
+    def view_requests(self):
+        pending_requests = False
+        for i in newdata.search('Member_pending').data:
+            if val[0] == i['to_be_member']:
+                pending_requests = True
                 break
-
-    def handle_requests(self, member_pending_request_table, project_table):
-        print('Project Invitation:')
-        pending_requests = self.view_requests(member_pending_request_table)
         if pending_requests:
-            request_id = input(
-                "Enter the ProjectID to respond to (or 'exit' to cancel): ")
-            if request_id.lower() == 'exit':
-                return
-            response = input(
-                "Do you want to accept (type 'accept') or deny (type 'deny') the request? ")
-            if response.lower() in ['accept', 'deny']:
-                accept = response.lower() == 'accept'
-                self.accept_deny_request(request_id, accept,
-                                         member_pending_request_table,
-                                         project_table)
-                print("Request response updated.")
-            else:
-                print("Invalid response. No action taken.")
+            filtered_data = newdata.search('Member_pending').filter(lambda x: x['to_be_member'] == val[0])
+            print(filtered_data)
         else:
-            print("No pending requests.")
+            print('You dont have any invite')
 
-    def change_to_lead(self, project_id, member_pending_request_table, project_table):
-        for request in member_pending_request_table.table:
-            if request['to_be_member'] == self.ID:
-                request['Response'] = 'Denied'
-        is_already_lead = any(
-            project['Lead'] == self.ID for project in project_table.table)
-        if is_already_lead:
-            print("This student is already a project lead.")
-        print(f"Role changed to 'lead' for project {project_id}. New project created.")
+    def accept_deny_request(self, request_id):
+        choice = input("you want to accept or deny? ")
+        if choice == 'accept':
+            project_table = newdata.search('project')
+            user_projects = project_table.filter(lambda x: x['ProjectID'] == self.ID).table
+            for project in user_projects:
+                if project['Member1'] == 'None':
+                    member_key = 'Member1'
+                elif project['Member2'] == 'None':
+                    member_key = 'Member2'
+                else:
+                    print('This group is full')
+                    break
+            newdata.search('Member_pending').update_row('to_be_member', 'pending', 'to_be_member', 'accepted','to_be_member', val[0])
+            newdata.search('login').update_row('role', 'student', 'role', 'member', 'ID', val[0])
+            newdata.search('project').update_row(member_key, 'None', member_key, val[0], 'ProjectID', request_id)
+        elif choice == 'deny':
+            newdata.search('Member_pending').update_row('Response', 'pending', 'Response', 'deny', 'to_be_member', val[0])
+
+    def change_to_lead(self):
+        status = 'lead'
+        newdata.search('login').update_row('role', 'student', 'role', status, 'ID', val[0])
+        print(newdata.search('login'))
+        print('Now your status is Lead')
 
 
 class Lead:
-    def __init__(self, person_id, first, last):
-        self.person_id = person_id
-        self.person_first = first
-        self.person_last = last
-        self.person_type = "Lead"
-        self.database = DB()
-
-    def project_status(self, project_id, project_table):
-        project = next((p for p in project_table.table if p['ProjectID'] == project_id), None)
-        if project:
-            print(f"\nProject Status - ProjectID: {project_id}, Title: {project['Title']}, Status: {project['Status']}")
+    def __init__(self):
+        projects_led_by_user = newdata.search('project').filter(lambda x: x['lead'] == val[0]).data
+        if projects_led_by_user:
+            project = projects_led_by_user[0]
+            self.ID = project['ProjectID']
+            self.status = project['status']
         else:
-            print(f"No project found with ProjectID {project_id}.")
-
-    def modify_project(self, project_table):
-        project_id = input("Enter the ProjectID you want to modify: ")
-        project = next((p for p in project_table.table if p['ProjectID'] == project_id), None)
-        if project:
-            print("\nCurrent Project Details:")
-            for key, value in project.items():
-                print(f"{key}: {value}")
-            new_title = input("Enter the new title for the project (or press Enter to keep the current title): ")
-            if new_title:
-                project['Title'] = new_title
-            print(f"Project details updated for ProjectID {project_id}.")
-        else:
-            print(f"No project found with ProjectID {project_id}.")
+            self.ID = None
+            self.status = None
 
     def create_project(self):
-        id = random_id
-        project_title = input("Enter the title of the project: ")
-        dct = {'ProjectID':id,'Title':project_title,'Lead':val[0],'Member1':None,'Member2':None,'Advisor':None,'Status':None}
-        database_n.database.append(dct)
-        exit('Project table.csv',dct)
+        project_name = input("Enter project name: ")
+        project_id = generate_random_project_id()
+        dct = {'ProjectID': generate_random_project_id(), 'Title': project_name, 'Lead': val[0], 'Member1': 'None', 'Member2': 'None',
+                 'Advisor': 'None', 'status': 'None'}
+        newdata.search('project').insert_row(dct)
+        print(newdata.search('project'))
+        print("NEW PROJECT CREATED")
+        return project_id, project_name
 
+    def sent_request(self):
+        check = input('Want to request for advisor or member? ')
+        if check == 'advisor':
+            for project in newdata.search('project').filter(lambda x: x['ProjectID'] == self.ID).data:
+                if project['Advisor'] != 'None':
+                    print('Your group already has an advisor')
+                elif project['Advisor'] == 'None':
+                    print(newdata.search('login').filter(lambda x: x['role'] == 'faculty'))
+                    faculty_id = int(input('Faculty(ID): '))
+                    if any(invite['to_be_advisor'] == faculty_id for invite in newdata.search('advisor table').data):
+                        print('You already sent an invitation to this faculty')
+                    else:
+                        date = input('Date/month/year: ')
+                        dct_add = {'ProjectID': self.ID, 'to_be_advisor': faculty_id, 'Response': 'pending', 'Response_date': date}
+                        newdata.search('Advisor_pending').insert_row(dct_add)
+                        print(newdata.search('Advisor_pending'))
+        if check == 'member':
+            for project in newdata.search('project').filter(lambda x: x['ProjectID'] == self.ID).data:
+                if project['Member1'] != 'None' and project['Member2'] != 'None':
+                    print('Your group is full')
+                elif project['Member1'] == 'None' or project['Member2'] == 'None':
+                    print(newdata.search('login').filter(lambda x: x['role'] == 'student'))
+                    student_id = int(input('Student(ID): '))
+                    if any(invite['to_be_member'] == student_id for invite in newdata.search('Member_pending').data):
+                        print('You already sent an invitation to this student')
+                    else:
+                        date = input('Date/month/year: ')
+                        dict_mem = {'ProjectID': self.ID, 'to_be_member': student_id, 'Response': 'pending',
+                                    'Response_date': date}
+                        newdata.search('Member_pending').insert_row(dict_mem)
 
+    def modify_project(self):
+        project_name = input("Enter what you want to modify: ")
+        newdata.search('project').update_row('status', self.status, 'status', project_name, 'ProjectID', self.ID)
+        print('project has been updated')
 
-
-
-
-
-
-
-
-
-
-        pass
-        # project_title = input("Enter the title of the project: ")
-        # existing_project = next((project for project in project_table.table if project['Lead'] == self.person_id), None)
-        # if existing_project:
-        #     print(f"You are already leading a project with ProjectID {existing_project['ProjectID']}.")
-        # else:
-        #     new_project = {
-        #         'ProjectID': generate_random_project_id(),
-        #         'Title': project_title,
-        #         'Lead': self.person_id,
-        #         'Member1': None,
-        #         'Member2': None,
-        #         'Advisor': None,
-        #         'Status': 'Open'
-        #     }
-        #     project_table.insert_data(new_project)
-        #     print(f"Project '{project_title}' created with ProjectID {new_project['ProjectID']}.")
-        #     project_csv_filename = 'Project_table.csv'
-        #     with open(project_csv_filename, mode='w', newline='', encoding='utf-8') as file:
-        #         headers = project_table.data[0].keys()
-        #         writer = csv.DictWriter(file, fieldnames=headers)
-        #         writer.writeheader()
-        #         writer.writerows(project_table.data)
-        #     print(f"'Project table' saved to {project_csv_filename}.")
-
+    def project_status(self):
+        project_info = newdata.search('project').filter(lambda x: x['ProjectID'] == self.ID).data
+        print(project_info)
 
 class Member:
-    def __init__(self, person_id, first, last):
-        self.person_id = person_id
-        self.person_first = first
-        self.person_last = last
-        self.person_type = "Member"
-
-    def modify_project(self, project_table):
-        project_id = input("Enter the ProjectID you want to modify: ")
-        project = next((p for p in project_table.table if p['ProjectID'] == project_id), None)
-        if project and self.person_id in [project['Member1'], project['Member2']]:
-            print("\nCurrent Project Details:")
-            for key, value in project.items():
-                print(f"{key}: {value}")
-            new_title = input("Enter the new title for the project (or press Enter to keep the current title): ")
-            if new_title:
-                project['Title'] = new_title
-            print(f"Project details updated for ProjectID {project_id}.")
-        elif not project:
-            print(f"No project found with ProjectID {project_id}.")
+    def __init__(self):
+        projects_led_by_user = newdata.search('project').filter(lambda x: x['lead'] == val[0]).data
+        if projects_led_by_user:
+            project = projects_led_by_user[0]
+            self.ID = project['ProjectID']
+            self.status = project['status']
         else:
-            print(f"You are not a member of the project with ProjectID {project_id}.")
+            self.ID = None
+            self.status = None
 
+    def modify_project(self):
+        project_name = input("Enter what you want to modify: ")
+        newdata.search('project').update_row('status', self.status, 'status', project_name, 'ProjectID', self.ID)
+        print('project has been updated')
+
+    def project_status(self):
+        project_info = newdata.search('project').filter(lambda x: x['ProjectID'] == self.ID).data
+        print(project_info)
 
 class NormalFaculty:
-    def __init__(self, person_id, first, last):
-        self.person_id = person_id
-        self.person_first = first
-        self.person_last = last
-        self.person_type = "Normal Faculty"
-
-    def deny_to_serve_as_advisor(self, project_id, advisor_pending_request_table):
-        request = next((r for r in advisor_pending_request_table.data if r['ProjectID'] == project_id), None)
-        if request:
-            request['Response'] = 'Denied'
-            print(f"Advisor request for ProjectID {project_id} denied.")
+    def __init__(self):
+        advisor_pending_request = newdata.search('Advisor_pending').filter(lambda x: x['to_be_advisor'] == val[0]).table
+        if advisor_pending_request:
+            self.id = advisor_pending_request[0]['ProjectID']
         else:
-            print(f"No pending advisor request found for ProjectID {project_id}.")
+            self.id = None
 
-    def view_all_projects(self, project_table):
-        print("\nList of All Projects:")
-        for project in project_table.table:
-            print(f"ProjectID: {project['ProjectID']}, Title: {project['Title']}, Status: {project['Status']}")
+    def view_request(self):
+        for i in newdata.search('Advisor_pending').data:
+            if val[0] == i['to_be_advisor']:
+                print(newdata.search('Advisor_pending').filter(lambda x: x['to_be_advisor'] == val[0]))
+            elif val[0] != i['to_be_advisor']:
+                print('You dont have any invite')
 
-    def evaluate_project(self, project_id, project_table):
-        project = next((p for p in project_table.table if p['ProjectID'] == project_id), None)
-        if project:
-            print(f"\nEvaluate Project - ProjectID: {project_id}, Title: {project['Title']}")
-            evaluation = input("Enter your evaluation and feedback for the project: ")
-            print(f"Thank you for evaluating ProjectID {project_id}.")
-        else:
-            print(f"No project found with ProjectID {project_id}.")
+    def project_detail(self):
+        print(newdata.search('project'))
+
+
+    def accept_deny_to_serve_as_advisor(self,ID):
+        choice = input('accept/deny: ')
+        if choice == 'accept':
+            newdata.search('Advisor_pending').update_row('to_be_advisor', 'pending', 'to_be_advisor', 'accepted',                                                       'ProjectID', ID)
+            newdata.search('login').update_row('role', 'faculty', 'role', 'advisor', 'ID', val[0])
+            newdata.search('project').update_row('Advisor', 'None', 'Advisor', val[0], 'ProjectID', ID)
+        elif choice == 'deny':
+            newdata.search('Advisor_pending').update_row('Response', 'pending', 'Response', 'deny', 'to_be_advisor',val[0])
 
 
 class AdvisingFaculty:
-    def __init__(self, person_id, first, last):
-        self.person_id = person_id
-        self.person_first = first
-        self.person_last = last
-        self.person_type = "Advising Faculty"
-
-    def deny_to_serve_as_advisor(self, project_id, advisor_pending_request_table):
-        request = next((r for r in advisor_pending_request_table.data if r['ProjectID'] == project_id), None)
-        if request:
-            request['Response'] = 'Denied'
-            print(f"Advisor request for ProjectID {project_id} denied.")
+    def __init__(self):
+        projects_with_advisor = newdata.search('project').filter(lambda x: x['Advisor'] == val[0]).data
+        if projects_with_advisor:
+            project_info = projects_with_advisor[0]
+            self.ID = project_info['ProjectID']
+            self.status = project_info['status']
         else:
-            print(f"No pending advisor request found for ProjectID {project_id}.")
+            self.ID = None
+            self.status = None
 
-    def accept_to_serve_as_advisor(self, project_id, advisor_pending_request_table):
-        request = next((r for r in advisor_pending_request_table.data if r['ProjectID'] == project_id), None)
-        if request:
-            request['Response'] = 'Accepted'
-            print(f"Advisor request for ProjectID {project_id} accepted.")
-        else:
-            print(f"No pending advisor request found for ProjectID {project_id}.")
+    def update_status(self):
+        status = input('what is your progress: ')
+        newdata.search('project').update_row('status', self.status, 'status', status, 'ProjectID', self.ID)
+        print('updated')
 
-    def view_all_projects(self, project_table):
-        print("\nList of All Projects:")
-        for project in project_table.table:
-            print(f"ProjectID: {project['ProjectID']}, Title: {project['Title']}, Status: {project['Status']}")
+    def project_status(self):
+        project_info = newdata.search('project').filter(lambda x: x['ProjectID'] == self.ID).data
+        print(project_info)
 
-    def evaluate_project(self, project_id, project_table):
-        project = next((p for p in project_table.table if p['ProjectID'] == project_id), None)
-        if project:
-            print(f"\nEvaluate Project - ProjectID: {project_id}, Title: {project['Title']}")
-            evaluation = input("Enter your evaluation and feedback for the project: ")
-            print(evaluation)
-            print(f"Thank you for evaluating ProjectID {project_id}.")
-        else:
-            print(f"No project found with ProjectID {project_id}.")
-
-    def approve_project(self, project_id, project_table):
-        project = next((p for p in project_table.table if p['ProjectID'] == project_id), None)
-        if project:
-            project['Status'] = 'Approved'
-            print(f"ProjectID {project_id} has been approved.")
-        else:
-            print(f"No project found with ProjectID {project_id}.")
-
+    def approve(self):
+        approve = input('You want to approve this project(yes/no)? ')
+        if approve == 'yes':
+            newdata.search('project').update_row('status', self.status, 'status', 'approve', 'ProjectID',
+                                                     self.ID)
+        elif approve == 'no':
+            newdata.search('project').update_row('status', self.status, 'status', 'not_approve', 'ProjectID',
+                                                     self.ID)
 class Admin:
     pass
 
-initializing()
+data = initializing()
+newdata = copy.deepcopy(data)
 val = login()
-
-memPendReq_table = database_n.search('Member_pending_request')
-project_table = database_n.search('project')
-login_table = database_n.search('login')
-
-memPendReq_mockdata = [
-    {'ProjectID': 'P001', 'to_be_member': '9898118', 'Response': None, 'Response_date': None},
-    {'ProjectID': 'P002', 'to_be_member': '9898118', 'Response': None, 'Response_date': None}
-]
-project_mockdata = [
-    {'ProjectID': 'P001', 'Title': 'Project A', 'Lead': None, 'Member1': None, 'Member2': None, 'Advisor': None, 'Status': 'Open'},
-    {'ProjectID': 'P002', 'Title': 'Project B', 'Lead': None, 'Member1': None, 'Member2': None, 'Advisor': None, 'Status': 'Open'}
-]
-
-advisorPendReq_data = [{'ProjectID': None, 'to_be_advisor': None, 'Response': None, 'Response_date': None}]
-advisor_pending_request_table = Table('Advisor_pending_request', advisorPendReq_data)
-database_n.insert(advisor_pending_request_table)
-
-from database import Table
-
-member_table_data = [
-    {'ID': '1', 'first': 'John', 'last': 'Doe', 'Status': 'Available'},
-    {'ID': '2', 'first': 'Jane', 'last': 'Doe', 'Status': 'Available'},]
-member_table = Table('Member table', member_table_data)
-
+print(val)
 
 if val[1] == 'student':
-    student_instance = Student(val[0], memPendReq_table, project_table)
+    student = Student()
     while True:
             print("\n=== Student Menu ===")
             print("1. View Pending Requests")
             print("2. Accept or Deny Requests")
-            print("3. View Project Details")
-            print("4. Change Role to Lead")
-            print("5. Exit")
+            print("3. Change Role to Lead")
+            print("4. Exit")
             choice = input("Enter your choice: ")
             if choice == '1':
-                student_instance.view_requests(memPendReq_table)
+                student.view_requests()
             elif choice == '2':
-                student_instance.handle_requests(memPendReq_table, project_table)
+                project_id = input('Enter projectID: ')
+                student.accept_deny_request(project_id)
             elif choice == '3':
-                student_instance.view_requests(memPendReq_table)
-                project_id = input("Enter the ProjectID to view details: ")
+                student.change_to_lead()
             elif choice == '4':
-                student_instance.change_to_lead(random_id,memPendReq_table, project_table)
-            elif choice == '5':
                 break
             else:
                 print("Invalid choice. Please try again.")
 
 elif val[1] == 'member':
-    member_instance = Member(val[0], "MemberFirstName", "MemberLastName")
+    member = Member()
     while True:
         print("\n=== Member Menu ===")
         print("1. Modify Project Details")
-        print("2. Exit")
+        print("2. See project status")
+        print("3. Exit")
         choice = input("Enter your choice: ")
         if choice == '1':
-            member_instance.modify_project(project_table)
+            member.modify_project()
         elif choice == '2':
+            member.project_status()
+        elif choice == '3':
             break
         else:
             print("Invalid choice. Please try again.")
-
+#
 elif val[1] == 'faculty':
-    faculty_instance = NormalFaculty(val[0], "FacultyFirstName", "FacultyLastName")
+    faculty = NormalFaculty()
     while True:
         print("\n=== Faculty Menu ===")
-        print("1. Deny Advisor Request")
-        print("2. View All Projects")
-        print("3. Evaluate Project")
+        print("1. View Request")
+        print("2. see projects detail")
+        print("3. accept/deny to serve as advisor")
         print("4. Exit")
         choice = input("Enter your choice: ")
         if choice == '1':
-            project_id = input("Enter ProjectID to deny advisor request: ")
-            faculty_instance.deny_to_serve_as_advisor(project_id, advisor_pending_request_table)
+            faculty.view_request()
         elif choice == '2':
-            faculty_instance.view_all_projects(project_table)
+            faculty.project_detail()
         elif choice == '3':
-            project_id = input("Enter ProjectID to evaluate: ")
-            faculty_instance.evaluate_project(project_id, project_table)
+            ID = input('Project[ID] to accept/deny: ')
+            faculty.accept_deny_to_serve_as_advisor(ID)
         elif choice == '4':
             break
         else:
             print("Invalid choice. Please try again.")
-
+#
 elif val[1] == 'lead':
-    lead_instance = Lead(val[0], "LeadFirstName", "LeadLastName")
+    lead = Lead()
     while True:
         print("\n=== Lead Menu ===")
-        print("1. View Project Status")
-        print("2. Modify Project Details")
-        print("3. See Responded Requests")
-        print("4. Send Requests")
-        print("5. Request Advisor for Project")
-        print("6. Create Project")
-        print("7. Exit")
+        print("1. Create project")
+        print("2. Sent request for advisor or member")
+        print("3. Modify project")
+        print("4. Check project status")
+        print("5. Exit")
         choice = input("Enter your choice: ")
         if choice == '1':
-            project_id = input("Enter ProjectID to view status: ")
-            lead_instance.project_status(project_id,project_table)
+            lead.create_project()
         if choice == '2':
-            project_id = input("Enter ProjectID to modify details: ")
-            changes = input("Enter modifications: ")
-            lead_instance.modify_project(project_table)
-        elif choice == '6':
-            lead_instance.create_project()
-        elif choice == '7':
+            lead.sent_request()
+        elif choice == '3':
+            lead.modify_project()
+        elif choice == '4':
+            lead.project_status()
+        elif choice == '5':
             break
         else:
             print("Invalid choice. Please try again.")
 
 elif val[1] == 'advisor':
-    advisor_instance = AdvisingFaculty(val[0], "AdvisorFirstName", "AdvisorLastName")
+    advisor = AdvisingFaculty()
     while True:
         print("\n=== Advisor Menu ===")
-        print("1. Request Supervisor")
-        print("2. Deny Advisor Request")
-        print("3. Accept Advisor Request")
-        print("4. View All Projects")
-        print("5. Evaluate Project")
-        print("6. Approve Project")
-        print("7. Exit")
+        print("1. Update status")
+        print("2. Check project status")
+        print("3. Aprrove project")
+        print("4. Exit")
         choice = input("Enter your choice: ")
         if choice == '1':
-            project_id = input("Enter ProjectID to deny advisor request: ")
-            advisor_instance.deny_to_serve_as_advisor(project_id, advisor_pending_request_table)
+           advisor.update_status()
         elif choice == '2':
-            project_id = input("Enter ProjectID to accept advisor request: ")
-            advisor_instance.accept_to_serve_as_advisor(project_id, advisor_pending_request_table)
+            advisor.project_status()
         elif choice == '3':
-            advisor_instance.view_all_projects(project_table)
+            advisor.approve()
         elif choice == '4':
-            project_id = input("Enter ProjectID to evaluate: ")
-            advisor_instance.evaluate_project(project_id, project_table)
-        elif choice == '5':
-            project_id = input("Enter ProjectID to approve: ")
-            advisor_instance.approve_project(project_id, project_table)
-        elif choice == '6':
             break
         else:
             print("Invalid choice. Please try again.")
 
 exit()
-
