@@ -1,5 +1,8 @@
 ID,username,password,role
 7447677,Cristiano.R,2255,admin
+1111111,a,1,student
+2222222,b,2,lead
+3333333,c,3,advisor
 9898118,Lionel.M,2977,student
 5662557,Manuel.N,1244,student
 5687866,Robert.L,8176,student
