@@ -1,6 +1,6 @@
 ## My final project have 7 file csv 5 files ,1 database file and 1 main file
 
-This project you can choose what you want to be and login as role that you want and what each role and do see below
+This project you can choose what you want to be and login as role that you want. What each role can do see below
 
 ### This is what final project classes have
 
